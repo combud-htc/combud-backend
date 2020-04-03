@@ -3,6 +3,7 @@ import Http from "http";
 import Winston from "winston";
 import Bp from "body-parser";
 import Knex from "knex";
+import User from "./models/User";
 
 const app = Express();
 
@@ -24,5 +25,17 @@ const logger = Winston.createLogger({
 		})
 	]
 });
+
+const db = Knex({
+	"client" : "mysql",
+	"connection" : {
+		"host" : process.env.DB_HOST,
+		"user" : process.env.DB_USER,
+		"password" : process.env.DB_PASSWORD,
+		"database" : process.env.DB_NAME
+	}
+});
+
+db.on("error", logger.error);
 
 server.listen(parseInt(process.env.PORT || "3000", 10), () => logger.info(`Listening on port ${process.env.PORT || "3000"}!`));
