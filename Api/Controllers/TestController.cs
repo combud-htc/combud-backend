@@ -19,32 +19,6 @@ namespace Api.Controllers
 		}
 
 		[HttpGet]
-		[Route("GetPosts")]
-		public async Task<Post> GetPosts()
-		{
-			//await HttpContext.Session.LoadAsync().ConfigureAwait(false);
-			Post p = this._db.User.Where(u => u.Id == 2).FirstOrDefault().Post.FirstOrDefault();
-			p.OwnerNavigation = null;
-			return this._db.User.Where(u => u.Id == 2).FirstOrDefault().Post.FirstOrDefault();
-		}
-
-		[HttpGet]
-		[Route("Set")]
-		public async Task<string> Set()
-		{
-			HttpContext.Session.SetString("uwu", "owo");
-			await HttpContext.Session.CommitAsync().ConfigureAwait(false);
-			return "OWO";
-		}
-
-		[HttpGet]
-		[Route("Get")]
-		public string Get()
-		{
-			return HttpContext.Session.GetString("uwu");
-		}
-
-		[HttpGet]
 		[Route("Test")]
 		public string Test() => "Test";
 	}

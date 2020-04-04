@@ -112,12 +112,35 @@ namespace Api.Controllers
 			try
 			{
 				await HttpContext.Session.LoadAsync().ConfigureAwait(false);
-				if (HttpContext.Session.Keys.Contains("Id")) return new LoggedInResponse() { statusCode = WebTypes.StatusCode.OK, IsLoggedIn = true };
+
+				if (HttpContext.Session.Keys.Contains("Id")) {
+					User u = this._db.User.Where(user => user.Id == HttpContext.Session.GetInt32("Id")).FirstOrDefault();
+					return new LoggedInResponse() { statusCode = WebTypes.StatusCode.OK, IsLoggedIn = true, Username =  u.Username};
+				}
+
 				return new LoggedInResponse() { statusCode = WebTypes.StatusCode.OK, IsLoggedIn = false };
 			}
 			catch
 			{
 				return new LoggedInResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "Server error!" };
+			}
+		}
+		#endregion
+		#region Logout
+
+		[HttpGet]
+		[Route("Logout")]
+		public async Task<ActionResult> Logout()
+		{
+			try
+			{
+				await HttpContext.Session.LoadAsync().ConfigureAwait(false);
+				HttpContext.Session.Clear();
+				await HttpContext.Session.CommitAsync().ConfigureAwait(false);
+				return Redirect("/");
+			} catch
+			{
+				return Redirect("/logouterror");
 			}
 		}
 		#endregion

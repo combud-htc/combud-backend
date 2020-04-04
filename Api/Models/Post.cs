@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Api.Models
 {
@@ -11,6 +10,9 @@ namespace Api.Models
         public string Address { get; set; }
         public string Description { get; set; }
         public DateTime TimePosted { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+        public DateTime TimeDue { get; set; }
 
         public virtual User OwnerNavigation { get; set; }
     }

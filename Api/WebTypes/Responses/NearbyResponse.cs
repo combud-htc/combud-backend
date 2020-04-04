@@ -8,6 +8,6 @@ namespace Api.WebTypes.Responses
 {
 	public class NearbyResponse : GenericResponse
 	{
-		
+		public List<ResponsePost> posts { get; set; }
 	}
 }

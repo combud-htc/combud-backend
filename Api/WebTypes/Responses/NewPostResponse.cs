@@ -5,9 +5,7 @@ using System.Threading.Tasks;
 
 namespace Api.WebTypes.Responses
 {
-	public class LoggedInResponse : GenericResponse
+	public class NewPostResponse : GenericResponse
 	{
-		public bool IsLoggedIn { get; set; }
-		public string Username { get; set; }
 	}
 }

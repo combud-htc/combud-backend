@@ -49,6 +49,12 @@ namespace Api
 				options.Cookie.HttpOnly = true;
 				options.Cookie.IsEssential = true;
 			});
+
+			services.AddSingleton(new ComBudConfiguration()
+			{
+				GMAP_API_KEY = Environment.GetEnvironmentVariable("GMAP_API_KEY")
+			});
+
 			services.AddControllers();
 		}
 

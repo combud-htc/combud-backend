@@ -7,7 +7,8 @@ namespace Api.WebTypes.Requests
 {
 	public class NearbyRequest
 	{
-		public string Country { get; set; }
+		//public string Country { get; set; }
+		public int MaxDistance { get; set; }
 		public float Latitiude { get; set; }
 		public float Longitude { get; set; }
 	}
