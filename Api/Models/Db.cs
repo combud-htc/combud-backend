@@ -13,6 +13,11 @@ namespace Api.Models
 
 		}
 
+		protected override void OnModelCreating(ModelBuilder modelBuilder)
+		{
+			base.OnModelCreating(modelBuilder);
+		}
+
 		public DbSet<User> users { get; set; }
 
 	}

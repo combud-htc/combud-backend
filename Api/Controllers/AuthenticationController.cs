@@ -9,6 +9,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using bcrypt = BCrypt.Net.BCrypt;
 using Microsoft.AspNetCore.Http;
+using Microsoft.SqlServer.Types;
+using NetTopologySuite.Geometries;
+using System.Data.Entity.Spatial;
 
 namespace Api.Controllers
 {
@@ -25,7 +28,6 @@ namespace Api.Controllers
 			this._db = db;
 		}
 
-		//bcrypt.HashPassword("", bcrypt.GenerateSalt(12), true, BCrypt.Net.HashType.SHA512);
 		#region Login
 		[HttpPost]
 		[Route("Login")]
@@ -57,17 +59,51 @@ namespace Api.Controllers
 
 		#region Register
 		[HttpPost]
-		[Route("Regiser")]
-		public RegisterResponse Register([FromBody] RegisterRequest req)
+		[Route("Register")]
+		public async Task<RegisterResponse> Register([FromBody] RegisterRequest req)
 		{
 			string email = req.Email;
 			string username = req.Username;
+			string fname = req.FirstName;
+			string lname = req.LastName;
+			string password = req.Password;
 
 			if (this._db.users.Where(u => u.Email == email).Any()) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "This email is already in use!" };
 			if (this._db.users.Where(u => u.Username == username).Any()) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "This username is already in use!" };
 
+			User user = new User()
+			{
+				Address = "",
+				Email = email,
+				FirstName = fname,
+				LastName = lname,
+				HashedPassword =
+					bcrypt.HashPassword(
+						password,
+						bcrypt.GenerateSalt(12), true,
+						BCrypt.Net.HashType.SHA512
+				),
+				Username = username,
+				ValidatedEmail = false,
+				EmailValidationToken = RandomString(50)
+			};
 
-			return new RegisterResponse();
+			this._db.users.Add(user);
+			await this._db.SaveChangesAsync().ConfigureAwait(false);
+
+
+			// SEND VERIFICATION EMAIL USING AWS SES API!
+			return new RegisterResponse() { statusCode = WebTypes.StatusCode.OK };
+		}
+		#endregion
+
+		#region EmailRandomTokenGeneration
+		public string RandomString(int length)
+		{
+			Random random = new Random();
+			const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+			return new string(Enumerable.Repeat(chars, length)
+			  .Select(s => s[random.Next(s.Length)]).ToArray());
 		}
 		#endregion
 	}
