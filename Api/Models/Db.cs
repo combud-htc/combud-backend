@@ -38,7 +38,7 @@ namespace Api.Models
 
                 entity.Property(e => e.Title)
                     .IsRequired()
-                    .HasMaxLength(50);
+                    .HasMaxLength(20);
 
                 entity.HasOne(d => d.OwnerNavigation)
                     .WithMany(p => p.Post)
