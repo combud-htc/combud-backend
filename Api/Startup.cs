@@ -37,17 +37,19 @@ namespace Api
 			services.AddOptions();
 			services.AddDistributedRedisCache(options => options.Configuration = Environment.GetEnvironmentVariable("REDIS_URL"));
 
-			services.AddDbContext<Db>(options => options.UseSqlServer(Environment.GetEnvironmentVariable("SQL_CONNSTR"), x =>
+			services.AddDbContext<Db>(options => options.UseLazyLoadingProxies().UseSqlServer(Environment.GetEnvironmentVariable("SQL_CONNSTR"), x =>
 			{
 				x.UseNetTopologySuite();
 			}));
+
 			services.AddSession(options =>
 			{
 				options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 				options.Cookie.SameSite = SameSiteMode.Strict;
 				options.Cookie.HttpOnly = true;
 				options.Cookie.IsEssential = true;
-			}); services.AddControllers();
+			});
+			services.AddControllers();
 		}
 
 		public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -55,6 +57,10 @@ namespace Api
 			if (env.IsDevelopment()) app.UseDeveloperExceptionPage();
 
 			app.UseHttpsRedirection();
+
+			app.UseDefaultFiles();
+
+			app.UseStaticFiles();
 
 			app.UseSession();
 

@@ -7,6 +7,9 @@ namespace HashCostTesting
 	{
 		static void Main(string[] args)
 		{
+            Console.WriteLine(BCrypt.Net.BCrypt.Verify("password", "$2a$12$EY7W3.Ma0jv7xWnGnhVgn.IUM9vPO9fDHtHGTtXK4AMebPBRuHJAW", true, BCrypt.Net.HashType.SHA512));
+            Console.ReadLine();
+
             var cost = 16;
             var timeTarget = 100; // Milliseconds
             long timeTaken;

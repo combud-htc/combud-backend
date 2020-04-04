@@ -12,11 +12,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.SqlServer.Types;
 using NetTopologySuite.Geometries;
 using System.Data.Entity.Spatial;
+using System.Net.Mail;
 
 namespace Api.Controllers
 {
 	[ApiController]
-	[Route("[controller]")]
+	[Route("api/[controller]")]
 	public class AuthenticationController : ControllerBase
 	{
 		private readonly ILogger<AuthenticationController> _logger;
@@ -27,16 +28,17 @@ namespace Api.Controllers
 			this._logger = logger;
 			this._db = db;
 		}
-
+		
+		#region Routes
 		#region Login
 		[HttpPost]
 		[Route("Login")]
-		public async Task<LoginResponse> Login([FromBody] LoginRequest req)
+		public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest req)
 		{
 			string email = req.Email;
 			string password = req.Password;
 
-			User user = this._db.users.Where(u => u.Email == email).FirstOrDefault();
+			User user = this._db.User.Where(u => u.Email == email).FirstOrDefault();
 
 			if (user == null || user == default)
 				return new LoginResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "The email entered does not have an account registered to it!" };
@@ -56,39 +58,45 @@ namespace Api.Controllers
 			else return new LoginResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "Invalid Password!" };
 		}
 		#endregion
-
 		#region Register
 		[HttpPost]
 		[Route("Register")]
-		public async Task<RegisterResponse> Register([FromBody] RegisterRequest req)
+		public async Task<ActionResult<RegisterResponse>> Register([FromBody] RegisterRequest req)
 		{
 			string email = req.Email;
 			string username = req.Username;
+			string password = req.Password;
 			string fname = req.FirstName;
 			string lname = req.LastName;
-			string password = req.Password;
 
-			if (this._db.users.Where(u => u.Email == email).Any()) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "This email is already in use!" };
-			if (this._db.users.Where(u => u.Username == username).Any()) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "This username is already in use!" };
+			#region validation
+			// Verify user submitted data
+			if (email == null || string.IsNullOrWhiteSpace(email) ||  !IsValidEmail(email)) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "Not a valid email!" };
+			if (username == null || string.IsNullOrWhiteSpace(username) || username.Length < 16) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "Not a valid username!" };
+			if (this._db.User.Where(u => u.Email == email).Any()) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "This email is already in use!" };
+			if (this._db.User.Where(u => u.Username == username).Any()) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "This username is already in use!" };
+			if (fname == null || string.IsNullOrWhiteSpace(fname) || fname.Length < 2 || fname.Length > 30) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "First name is not valid!" };
+			if (lname == null || string.IsNullOrWhiteSpace(lname) || lname.Length < 2 || lname.Length > 30) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "Last name is not valid!" };
+
+			#endregion
 
 			User user = new User()
 			{
-				Address = "",
 				Email = email,
-				FirstName = fname,
-				LastName = lname,
 				HashedPassword =
 					bcrypt.HashPassword(
 						password,
 						bcrypt.GenerateSalt(12), true,
 						BCrypt.Net.HashType.SHA512
 				),
+				FirstName = fname,
+				LastName = lname,
 				Username = username,
 				ValidatedEmail = false,
-				EmailValidationToken = RandomString(50)
+				EmailValidationToken = RandomString(50),
 			};
 
-			this._db.users.Add(user);
+			this._db.User.Add(user);
 			await this._db.SaveChangesAsync().ConfigureAwait(false);
 
 
@@ -96,7 +104,39 @@ namespace Api.Controllers
 			return new RegisterResponse() { statusCode = WebTypes.StatusCode.OK };
 		}
 		#endregion
+		#region IsLoggedIn
+		[HttpGet]
+		[Route("IsLoggedIn")]
+		public async Task<ActionResult<LoggedInResponse>> IsLoggedIn()
+		{
+			try
+			{
+				await HttpContext.Session.LoadAsync().ConfigureAwait(false);
+				if (HttpContext.Session.Keys.Contains("Id")) return new LoggedInResponse() { statusCode = WebTypes.StatusCode.OK, IsLoggedIn = true };
+				return new LoggedInResponse() { statusCode = WebTypes.StatusCode.OK, IsLoggedIn = false };
+			}
+			catch
+			{
+				return new LoggedInResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "Server error!" };
+			}
+		}
+		#endregion
+		#endregion
 
+		#region verifyemail
+		bool IsValidEmail(string email)
+		{
+			try
+			{
+				MailAddress addr = new MailAddress(email);
+				return addr.Address == email && email.Length <= 50;
+			}
+			catch
+			{
+				return false;
+			}
+		}
+#endregion
 		#region EmailRandomTokenGeneration
 		public string RandomString(int length)
 		{
@@ -106,5 +146,6 @@ namespace Api.Controllers
 			  .Select(s => s[random.Next(s.Length)]).ToArray());
 		}
 		#endregion
+
 	}
 }
