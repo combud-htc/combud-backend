@@ -185,7 +185,7 @@ namespace Api.Controllers
 				{
 					u.ValidatedEmail = true;
 					_ = this._db.SaveChangesAsync().ConfigureAwait(false);
-					return Ok();
+					return Redirect("/");
 				}
 			} catch
 			{
