@@ -189,11 +189,10 @@ namespace Api.Controllers
 				}
 			} catch
 			{
-				return StatusCode(500);
+				return StatusCode(500, "Error");
 			}
 
 		}
-		#endregion
 		#endregion
 
 	}
