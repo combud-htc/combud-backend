@@ -56,7 +56,6 @@ namespace Api
 				GMAP_API_KEY = Environment.GetEnvironmentVariable("GMAP_API_KEY"),
 				AWS_ID = Environment.GetEnvironmentVariable("AWS_ID"),
 				AWS_KEY = Environment.GetEnvironmentVariable("AWS_KEY"),
-				EMAIL_HTML = Environment.GetEnvironmentVariable("EMAIL_HTML"),
 				SENDER_ADDRESS = Environment.GetEnvironmentVariable("SENDER_ADDRESS"),
 				BASE_URL = Environment.GetEnvironmentVariable("BASE_URL")
 			});

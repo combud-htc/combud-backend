@@ -11,7 +11,6 @@ namespace Api
 		public string AWS_ID { get; set; }
 		public string AWS_KEY { get; set; }
 		public string SENDER_ADDRESS { get; set; }
-		public string EMAIL_HTML { get; set; }
 		public string BASE_URL { get; set; }
 	}
 }
