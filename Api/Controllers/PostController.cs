@@ -56,6 +56,13 @@ namespace Api.Controllers
 			}
 		}
 
+		[HttpGet]
+		[Route("JoinQueue")]
+		public async Task<ActionResult> JoinQueue() {
+
+			return Ok();
+		}
+
 		[HttpPost]
 		[Route("GetNearbyPosts")]
 		public async Task<ActionResult<NearbyResponse>> GetNearbyWantedHelp([FromBody] NearbyRequest req)
