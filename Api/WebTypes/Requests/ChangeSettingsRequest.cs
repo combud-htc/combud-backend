@@ -5,9 +5,10 @@ using System.Threading.Tasks;
 
 namespace Api.WebTypes.Requests
 {
-	public class NearbyRequest
+	public class ChangeSettingsRequest
 	{
-		public float Latitiude { get; set; }
-		public float Longitude { get; set; }
+		public int Radius { get; set; }
+		public string Country { get; set; }
+		public string Town { get; set; }
 	}
 }

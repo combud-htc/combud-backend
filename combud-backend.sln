@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HashCostTesting", "HashCost
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModelGeneration", "ModelGeneration\ModelGeneration.csproj", "{24AC3BB5-1741-43F0-9383-E959EBB7FEA4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmailTesting", "EmailTesting\EmailTesting.csproj", "{32B61DB9-CF1C-472E-8990-F10A00965E81}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{24AC3BB5-1741-43F0-9383-E959EBB7FEA4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{24AC3BB5-1741-43F0-9383-E959EBB7FEA4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{24AC3BB5-1741-43F0-9383-E959EBB7FEA4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{32B61DB9-CF1C-472E-8990-F10A00965E81}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32B61DB9-CF1C-472E-8990-F10A00965E81}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32B61DB9-CF1C-472E-8990-F10A00965E81}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32B61DB9-CF1C-472E-8990-F10A00965E81}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

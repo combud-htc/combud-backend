@@ -5,9 +5,8 @@ using System.Threading.Tasks;
 
 namespace Api.WebTypes.Requests
 {
-	public class NearbyRequest
+	public class VerifyEmailRequest
 	{
-		public float Latitiude { get; set; }
-		public float Longitude { get; set; }
+		public string Token { get; set; }
 	}
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Api.Models
 {
@@ -19,6 +18,10 @@ namespace Api.Models
         public string EmailValidationToken { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
+        public string Country { get; set; }
+        public string Town { get; set; }
+        public int Radius { get; set; }
+
         public virtual ICollection<Post> Post { get; set; }
     }
 }

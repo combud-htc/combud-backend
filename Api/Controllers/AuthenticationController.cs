@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Api.Models;
@@ -9,10 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using bcrypt = BCrypt.Net.BCrypt;
 using Microsoft.AspNetCore.Http;
-using Microsoft.SqlServer.Types;
-using NetTopologySuite.Geometries;
-using System.Data.Entity.Spatial;
-using System.Net.Mail;
+using FormatWith;
 
 namespace Api.Controllers
 {
@@ -22,11 +18,13 @@ namespace Api.Controllers
 	{
 		private readonly ILogger<AuthenticationController> _logger;
 		private readonly Db _db;
+		private readonly ComBudConfiguration _config;
 
-		public AuthenticationController(ILogger<AuthenticationController> logger, Db db)
+		public AuthenticationController(ILogger<AuthenticationController> logger, Db db, ComBudConfiguration config)
 		{
 			this._logger = logger;
 			this._db = db;
+			this._config = config;
 		}
 		
 		#region Routes
@@ -63,45 +61,70 @@ namespace Api.Controllers
 		[Route("Register")]
 		public async Task<ActionResult<RegisterResponse>> Register([FromBody] RegisterRequest req)
 		{
-			string email = req.Email;
-			string username = req.Username;
-			string password = req.Password;
-			string fname = req.FirstName;
-			string lname = req.LastName;
-
-			#region validation
-			// Verify user submitted data
-			if (email == null || string.IsNullOrWhiteSpace(email) ||  !IsValidEmail(email)) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "Not a valid email!" };
-			if (username == null || string.IsNullOrWhiteSpace(username) || username.Length < 16) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "Not a valid username!" };
-			if (this._db.User.Where(u => u.Email == email).Any()) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "This email is already in use!" };
-			if (this._db.User.Where(u => u.Username == username).Any()) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "This username is already in use!" };
-			if (fname == null || string.IsNullOrWhiteSpace(fname) || fname.Length < 2 || fname.Length > 30) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "First name is not valid!" };
-			if (lname == null || string.IsNullOrWhiteSpace(lname) || lname.Length < 2 || lname.Length > 30) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "Last name is not valid!" };
-
-			#endregion
-
-			User user = new User()
+			try
 			{
-				Email = email,
-				HashedPassword =
-					bcrypt.HashPassword(
-						password,
-						bcrypt.GenerateSalt(12), true,
-						BCrypt.Net.HashType.SHA512
-				),
-				FirstName = fname,
-				LastName = lname,
-				Username = username,
-				ValidatedEmail = false,
-				EmailValidationToken = RandomString(50),
-			};
+				string email = req.Email;
+				string username = req.Username;
+				string password = req.Password;
+				string fname = req.FirstName;
+				string lname = req.LastName;
+				string country = req.Country;
+				string town = req.Town;
 
-			this._db.User.Add(user);
-			await this._db.SaveChangesAsync().ConfigureAwait(false);
+				#region validation
+
+				// Verify user submitted data
+				if (email == null || string.IsNullOrWhiteSpace(email) || !Helper.IsValidEmail(email)) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "Not a valid email!" };
+				if (username == null || string.IsNullOrWhiteSpace(username) || username.Length > 20) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "Not a valid username!" };
+				if (this._db.User.Where(u => u.Email == email).Any()) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "This email is already in use!" };
+				if (this._db.User.Where(u => u.Username == username).Any()) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "This username is already in use!" };
+				if (fname == null || string.IsNullOrWhiteSpace(fname) || fname.Length < 2 || fname.Length > 30) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "First name is not valid!" };
+				if (lname == null || string.IsNullOrWhiteSpace(lname) || lname.Length < 2 || lname.Length > 30) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "Last name is not valid!" };
+				if (country == null || string.IsNullOrWhiteSpace(country) || country.Length != 2) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "Country is not valid!" };
+				if (town == null || string.IsNullOrWhiteSpace(town) || lname.Length > 20) return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "Town is not valid!" };
+
+				#endregion
+
+				User user = new User()
+				{
+					Email = email,
+					HashedPassword =
+						bcrypt.HashPassword(
+							password,
+							bcrypt.GenerateSalt(12), true,
+							BCrypt.Net.HashType.SHA512
+					),
+					FirstName = fname,
+					LastName = lname,
+					Username = username,
+					ValidatedEmail = false,
+					EmailValidationToken = Helper.RandomString(50),
+					Radius = 50,
+					Country = req.Country,
+					Town = req.Town
+				};
+
+				this._db.User.Add(user);
+				_ = this._db.SaveChangesAsync().ConfigureAwait(false);
 
 
-			// SEND VERIFICATION EMAIL USING AWS SES API!
-			return new RegisterResponse() { statusCode = WebTypes.StatusCode.OK };
+				_ = Helper.SendEmail(
+					this._config.SENDER_ADDRESS,
+					email,
+					"Combud verification",
+					"<html><head><link href=\"https://fonts.googleapis.com/css?family=Poppins:600,700&display=swap\" rel=\"stylesheet\"><style>body{font-family:'Poppins',sans-serif;text-align:center}button{padding:0.5rem 2.5rem;background:#2ecc71;font-size:1.2rem;color:#FFF;border:0;border-radius:0.5rem}button a{color:#FFF;text-decoration:none}</style></head><body><h1>ComBud</h1><h3>Verify your email.</h3> <button><a href=\"" + $"{this._config.BASE_URL}/api/Authentication/Verify?Token={user.EmailValidationToken}" + "\">Verify</a></button></body></html>",
+					this._config.AWS_ID,
+					this._config.AWS_KEY)
+					.ConfigureAwait(false);
+				
+
+				return new RegisterResponse() { statusCode = WebTypes.StatusCode.OK };
+			} catch(Exception e)
+			{
+				this._logger.LogError(e, "", "");
+				return new RegisterResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "Server error!" };
+
+			}
 		}
 		#endregion
 		#region IsLoggedIn
@@ -144,30 +167,33 @@ namespace Api.Controllers
 			}
 		}
 		#endregion
-		#endregion
 
-		#region verifyemail
-		bool IsValidEmail(string email)
+		#region VerifyEmail
+		[HttpGet]
+		[Route("Verify")]
+		public async Task<ActionResult> Verify([FromQuery] VerifyEmailRequest req)
 		{
 			try
 			{
-				MailAddress addr = new MailAddress(email);
-				return addr.Address == email && email.Length <= 50;
-			}
-			catch
+				string token = req.Token;
+				User u = this._db.User.Where(user => user.EmailValidationToken == token).FirstOrDefault();
+
+				if(u == null || u == default)
+				{
+					return Unauthorized();
+				} else
+				{
+					u.ValidatedEmail = true;
+					_ = this._db.SaveChangesAsync().ConfigureAwait(false);
+					return Ok();
+				}
+			} catch
 			{
-				return false;
+				return StatusCode(500);
 			}
+
 		}
-#endregion
-		#region EmailRandomTokenGeneration
-		public string RandomString(int length)
-		{
-			Random random = new Random();
-			const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-			return new string(Enumerable.Repeat(chars, length)
-			  .Select(s => s[random.Next(s.Length)]).ToArray());
-		}
+		#endregion
 		#endregion
 
 	}

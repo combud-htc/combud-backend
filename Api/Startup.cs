@@ -20,6 +20,7 @@ using Microsoft.Extensions.Caching.Redis;
 using StackExchange.Redis;
 using System.Net;
 using NetTopologySuite.Geometries;
+using Microsoft.OpenApi.Models;
 
 namespace Api
 {
@@ -52,7 +53,17 @@ namespace Api
 
 			services.AddSingleton(new ComBudConfiguration()
 			{
-				GMAP_API_KEY = Environment.GetEnvironmentVariable("GMAP_API_KEY")
+				GMAP_API_KEY = Environment.GetEnvironmentVariable("GMAP_API_KEY"),
+				AWS_ID = Environment.GetEnvironmentVariable("AWS_ID"),
+				AWS_KEY = Environment.GetEnvironmentVariable("AWS_KEY"),
+				EMAIL_HTML = Environment.GetEnvironmentVariable("EMAIL_HTML"),
+				SENDER_ADDRESS = Environment.GetEnvironmentVariable("SENDER_ADDRESS"),
+				BASE_URL = Environment.GetEnvironmentVariable("BASE_URL")
+			});
+
+			services.AddSwaggerGen(c =>
+			{
+				c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
 			});
 
 			services.AddControllers();
@@ -65,6 +76,12 @@ namespace Api
 			app.UseHttpsRedirection();
 
 			app.UseDefaultFiles();
+			app.UseSwagger();
+			
+			app.UseSwaggerUI(c =>
+			{
+				c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+			});
 
 			app.UseStaticFiles();
 

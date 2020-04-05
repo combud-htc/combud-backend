@@ -65,10 +65,14 @@ namespace Api.Controllers
 				await HttpContext.Session.LoadAsync().ConfigureAwait(false);
 				if (!HttpContext.Session.Keys.Contains("Id")) return Unauthorized();
 
+				User user = this._db.User
+					.Where(u => u.Id == HttpContext.Session.GetInt32("Id"))
+					.FirstOrDefault();
+
 				float lat = req.Latitiude;
 				float lng = req.Longitude;
 
-				IEnumerable<Post> posts = this._db.Post.AsEnumerable().Where(p => IsClose(p, lat, lng, req.MaxDistance));
+				IEnumerable<Post> posts = this._db.Post.AsEnumerable().Where(p => Helper.IsClose(p, lat, lng, user.Radius));
 
 				NearbyResponse res = new NearbyResponse();
 				res.posts = new List<ResponsePost>();
@@ -84,7 +88,9 @@ namespace Api.Controllers
 						Latitude = p.Latitude,
 						Longitude = p.Longitude,
 						TimePosted = p.TimePosted,
-						Title = p.Title
+						Title = p.Title,
+						TimeDue = p.TimeDue,
+						Username = p.OwnerNavigation.Username
 					});
 				}
 
@@ -96,19 +102,5 @@ namespace Api.Controllers
 				return new NearbyResponse() { statusCode = WebTypes.StatusCode.ERROR, errorMessage = "Server side error!" };
 			}
 		}
-
-		private bool IsClose(Post p, float lat, float lon, int maxdist)
-		{
-			if ((p.Latitude == lat) && (p.Longitude == lon)) return true;
-			double theta = p.Longitude - lon;
-			double dist = Math.Sin(deg2rad(p.Latitude)) * Math.Sin(deg2rad(lat)) + Math.Cos(deg2rad(p.Latitude)) * Math.Cos(deg2rad(lat)) * Math.Cos(deg2rad(theta));
-			dist = rad2deg(Math.Acos(dist));
-			dist = dist * 60 * 1.1515;
-			return dist <= maxdist;
-		}
-
-		private double deg2rad(double deg) => (deg * Math.PI / 180.0);
-		private double rad2deg(double rad) => (rad / Math.PI * 180.0);
-
 	}
 }

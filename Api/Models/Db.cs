@@ -16,6 +16,7 @@ namespace Api.Models
         }
 
         public virtual DbSet<Post> Post { get; set; }
+        public virtual DbSet<PostQueue> PostQueue { get; set; }
         public virtual DbSet<User> User { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -34,6 +35,8 @@ namespace Api.Models
                     .IsRequired()
                     .HasMaxLength(1000);
 
+                entity.Property(e => e.TimeDue).HasColumnType("datetime");
+
                 entity.Property(e => e.TimePosted).HasColumnType("datetime");
 
                 entity.Property(e => e.Title)
@@ -47,11 +50,32 @@ namespace Api.Models
                     .HasConstraintName("FK_OWNER");
             });
 
+            modelBuilder.Entity<PostQueue>(entity =>
+            {
+                entity.HasNoKey();
+
+                entity.HasOne(d => d.Helper)
+                    .WithMany()
+                    .HasForeignKey(d => d.HelperId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_HELPER");
+
+                entity.HasOne(d => d.Post)
+                    .WithMany()
+                    .HasForeignKey(d => d.PostId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_POST");
+            });
+
             modelBuilder.Entity<User>(entity =>
             {
                 entity.HasIndex(e => e.Email)
                     .HasName("IX_User")
                     .IsUnique();
+
+                entity.Property(e => e.Country)
+                    .IsRequired()
+                    .HasMaxLength(2);
 
                 entity.Property(e => e.Email)
                     .IsRequired()
@@ -72,6 +96,10 @@ namespace Api.Models
                 entity.Property(e => e.LastName)
                     .IsRequired()
                     .HasMaxLength(30);
+
+                entity.Property(e => e.Town)
+                    .IsRequired()
+                    .HasMaxLength(20);
 
                 entity.Property(e => e.Username)
                     .IsRequired()
